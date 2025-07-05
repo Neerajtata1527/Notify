@@ -169,7 +169,7 @@ html, body {
   border-radius: 6px;
   cursor: pointer;
   width: fit-content;
-  align-self: flex-start;
+  align-self: flex-center;
 }
 
 .download-button:hover {
