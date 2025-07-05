@@ -1,28 +1,138 @@
 // ===== SELECTORS =====
 const builder = document.querySelector('.form-builder');
-
-// ===== DRAG & TOUCH SUPPORT =====
 let lastTouchMove = 0;
 
+// ===== ELEMENT TEMPLATE CACHE =====
+const elementTemplates = {
+  'big-heading': () => {
+    const el = document.createElement('h1');
+    el.textContent = 'Big Heading';
+    el.style.color = 'black';
+    el.contentEditable = 'true';
+    el.setAttribute("spellcheck", "false");
+    return el;
+  },
+  'small-heading': () => {
+    const el = document.createElement('h3');
+    el.textContent = 'Small Heading';
+    el.style.color = 'black';
+    el.contentEditable = 'true';
+    el.setAttribute("spellcheck", "false");
+    return el;
+  },
+  'paragraph': () => {
+    const el = document.createElement('p');
+    el.textContent = 'This is a paragraph of text.';
+    el.style.color = 'black';
+    el.contentEditable = 'true';
+    el.setAttribute("spellcheck", "false");
+    return el;
+  },
+  'text-input': () => {
+    const wrapper = document.createElement('div');
+    const label = document.createElement('label');
+    label.textContent = 'Text Input: ';
+    label.style.color = 'black';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Enter text';
+    input.style.color = 'black';
+    wrapper.appendChild(label);
+    wrapper.appendChild(input);
+    return wrapper;
+  },
+  'text-area': () => {
+    const wrapper = document.createElement('div');
+    const label = document.createElement('label');
+    label.textContent = 'Text Area: ';
+    label.style.color = 'black';
+    const textarea = document.createElement('textarea');
+    textarea.rows = 4;
+    textarea.cols = 30;
+    textarea.placeholder = 'Enter details';
+    textarea.style.color = 'black';
+    wrapper.appendChild(label);
+    wrapper.appendChild(textarea);
+    return wrapper;
+  },
+  'select-option': () => {
+    const wrapper = document.createElement('div');
+    const label = document.createElement('label');
+    label.textContent = 'Choose Option: ';
+    label.style.color = 'black';
+    label.contentEditable = 'true';
+    const select = document.createElement('select');
+    ['Option 1', 'Option 2', 'Option 3'].forEach(optText => {
+      const opt = document.createElement('option');
+      opt.textContent = optText;
+      select.appendChild(opt);
+    });
+    wrapper.appendChild(label);
+    wrapper.appendChild(select);
+    return wrapper;
+  },
+  'radio-group': () => {
+    const wrapper = document.createElement('div');
+    const label = document.createElement('label');
+    label.textContent = 'Choose One: ';
+    label.style.color = 'black';
+    label.contentEditable = 'true';
+    wrapper.appendChild(label);
+    const name = `radio-${Date.now()}`;
+    ['Radio 1', 'Radio 2', 'Radio 3'].forEach((txt, i) => {
+      wrapper.appendChild(document.createElement('br'));
+      const radio = document.createElement('input');
+      radio.type = 'radio';
+      radio.name = name;
+      radio.id = `radio-${i}`;
+      const radioLabel = document.createElement('label');
+      radioLabel.setAttribute('for', radio.id);
+      radioLabel.textContent = txt;
+      radioLabel.contentEditable = 'true';
+      wrapper.appendChild(radio);
+      wrapper.appendChild(radioLabel);
+    });
+    return wrapper;
+  },
+  'checkbox-group': () => {
+    const wrapper = document.createElement('div');
+    const label = document.createElement('label');
+    label.textContent = 'Select Multiple: ';
+    label.style.color = 'black';
+    label.contentEditable = 'true';
+    wrapper.appendChild(label);
+    ['Check 1', 'Check 2', 'Check 3'].forEach((txt, i) => {
+      wrapper.appendChild(document.createElement('br'));
+      const check = document.createElement('input');
+      check.type = 'checkbox';
+      check.id = `check-${i}`;
+      const checkLabel = document.createElement('label');
+      checkLabel.setAttribute('for', check.id);
+      checkLabel.textContent = txt;
+      checkLabel.contentEditable = 'true';
+      wrapper.appendChild(check);
+      wrapper.appendChild(checkLabel);
+    });
+    return wrapper;
+  }
+};
+
+// ===== DRAG & TOUCH SUPPORT =====
 document.querySelectorAll('.draggable').forEach(elem => {
-  // Desktop drag start
   elem.addEventListener('dragstart', e => {
     e.dataTransfer.setData('type', e.target.getAttribute('data-type'));
   });
 
-  // Mobile touch start
   elem.addEventListener('touchstart', e => {
     const type = elem.getAttribute('data-type');
     elem.classList.add('dragging');
     elem.setAttribute('data-dragging', type);
   });
 
-  // Mobile touch move with throttling
   elem.addEventListener('touchmove', e => {
     const now = Date.now();
     if (now - lastTouchMove < 30) return;
     lastTouchMove = now;
-
     const touch = e.touches[0];
     elem.style.position = 'absolute';
     elem.style.zIndex = 9999;
@@ -30,7 +140,6 @@ document.querySelectorAll('.draggable').forEach(elem => {
     elem.style.top = `${touch.clientY - 20}px`;
   });
 
-  // Mobile touch end resets
   elem.addEventListener('touchend', () => {
     elem.style.position = '';
     elem.style.zIndex = '';
@@ -39,7 +148,7 @@ document.querySelectorAll('.draggable').forEach(elem => {
   });
 });
 
-// ===== DESKTOP DROP SUPPORT =====
+// ===== DESKTOP & MOBILE DROP =====
 builder.addEventListener('dragover', e => e.preventDefault());
 builder.addEventListener('drop', e => {
   e.preventDefault();
@@ -47,132 +156,28 @@ builder.addEventListener('drop', e => {
   if (type) handleElementDrop(type);
 });
 
-// ===== MOBILE DROP SUPPORT =====
 builder.addEventListener('touchend', e => {
   const draggingElem = document.querySelector('.draggable.dragging');
   if (draggingElem) {
     const type = draggingElem.getAttribute('data-dragging');
     const touch = e.changedTouches[0];
     const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-
     if (builder.contains(dropTarget)) {
       handleElementDrop(type);
     }
-
     draggingElem.classList.remove('dragging');
     draggingElem.removeAttribute('data-dragging');
   }
 });
 
-// ===== HANDLE ELEMENT DROP =====
+// ===== FAST DROP HANDLER =====
 function handleElementDrop(type) {
+  if (!elementTemplates[type]) return;
   const wrapper = document.createElement('div');
   wrapper.className = 'form-builder-element';
-
-  const makeEditable = el => {
-    el.style.color = 'black';
-    el.contentEditable = 'true';
-    el.setAttribute("spellcheck", "false");
-    return el;
-  };
-
-  let elementToAppend = null;
-
-  switch (type) {
-    case 'big-heading':
-      elementToAppend = makeEditable(document.createElement('h1'));
-      elementToAppend.textContent = 'Big Heading';
-      wrapper.appendChild(elementToAppend);
-      break;
-
-    case 'small-heading':
-      elementToAppend = makeEditable(document.createElement('h3'));
-      elementToAppend.textContent = 'Small Heading';
-      wrapper.appendChild(elementToAppend);
-      break;
-
-    case 'paragraph':
-      elementToAppend = makeEditable(document.createElement('p'));
-      elementToAppend.textContent = 'This is a paragraph of text.';
-      wrapper.appendChild(elementToAppend);
-      break;
-
-    case 'text-input':
-      const inputLabel = document.createElement('label');
-      inputLabel.textContent = 'Text Input: ';
-      inputLabel.style.color = 'black';
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.placeholder = 'Enter text';
-      input.style.color = 'black';
-      wrapper.appendChild(inputLabel);
-      wrapper.appendChild(input);
-      break;
-
-    case 'text-area':
-      const taLabel = document.createElement('label');
-      taLabel.textContent = 'Text Area: ';
-      taLabel.style.color = 'black';
-      const textarea = document.createElement('textarea');
-      textarea.rows = 4;
-      textarea.cols = 30;
-      textarea.placeholder = 'Enter details';
-      textarea.style.color = 'black';
-      wrapper.appendChild(taLabel);
-      wrapper.appendChild(textarea);
-      break;
-
-    case 'select-option':
-      const selLabel = makeEditable(document.createElement('label'));
-      selLabel.textContent = 'Choose Option: ';
-      const select = document.createElement('select');
-      ['Option 1', 'Option 2', 'Option 3'].forEach(text => {
-        const opt = document.createElement('option');
-        opt.textContent = text;
-        opt.style.color = 'black';
-        select.appendChild(opt);
-      });
-      wrapper.appendChild(selLabel);
-      wrapper.appendChild(select);
-      break;
-
-    case 'radio-group':
-      const radioLabel = makeEditable(document.createElement('label'));
-      radioLabel.textContent = 'Choose One: ';
-      wrapper.appendChild(radioLabel);
-      ['Radio 1', 'Radio 2', 'Radio 3'].forEach((text, i) => {
-        const radio = document.createElement('input');
-        radio.type = 'radio';
-        radio.name = `radio-${Date.now()}`;
-        radio.id = `radio-${i}`;
-        const label = makeEditable(document.createElement('label'));
-        label.setAttribute('for', radio.id);
-        label.textContent = text;
-        wrapper.appendChild(document.createElement('br'));
-        wrapper.appendChild(radio);
-        wrapper.appendChild(label);
-      });
-      break;
-
-    case 'checkbox-group':
-      const checkLabel = makeEditable(document.createElement('label'));
-      checkLabel.textContent = 'Select Multiple: ';
-      wrapper.appendChild(checkLabel);
-      ['Check 1', 'Check 2', 'Check 3'].forEach((text, i) => {
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.id = `check-${i}`;
-        const label = makeEditable(document.createElement('label'));
-        label.setAttribute('for', checkbox.id);
-        label.textContent = text;
-        wrapper.appendChild(document.createElement('br'));
-        wrapper.appendChild(checkbox);
-        wrapper.appendChild(label);
-      });
-      break;
-  }
-
-  requestAnimationFrame(() => builder.appendChild(wrapper)); // smoother rendering
+  const newElement = elementTemplates[type]();
+  wrapper.appendChild(newElement);
+  requestAnimationFrame(() => builder.appendChild(wrapper));
 }
 
 // ===== EXPORT TO PDF =====
