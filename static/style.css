@@ -26,6 +26,7 @@ html, body {
   width: 100%;
   min-height: 100vh;
   flex-wrap: wrap;
+  overflow-x: auto; 
 }
 
 /* Toolbox */
@@ -36,6 +37,7 @@ html, body {
   background-color: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(6px);
   box-sizing: border-box;
+  min-width: 280px;
 }
 
 .toolbox h3 {
@@ -67,6 +69,9 @@ html, body {
   flex-direction: column;
   gap: 15px;
   color: #fcfcfc;
+  min-height: 60vh;
+  overflow-y: auto;
+  min-width: 300px;
 }
 
 .form-builder .heading {
@@ -169,8 +174,7 @@ html, body {
   border-radius: 6px;
   cursor: pointer;
   width: fit-content;
-  align-self: flex-center;
-}
+  align-self: center; 
 
 .download-button:hover {
   background-color: #218838;
@@ -186,27 +190,21 @@ input[type="text"], textarea, select {
   box-sizing: border-box;
 }
 
-/* Responsive Design */
+/* Responsive Design — Always side by side, scroll if needed */
 @media (max-width: 992px) {
   .builder-container {
-    flex-direction: column;
-  }
-
-  .toolbox, .form-builder {
-    flex: 1 1 100%;
-    border: none;
+    flex-direction: row;
+    flex-wrap: nowrap;
   }
 
   .toolbox {
-    border-bottom: 1px solid white;
+    flex: 1 1 45%;
+    min-width: 280px;
   }
 
   .form-builder {
-    border-left: none;
-  }
-
-  .download-button {
-    align-self: center;
+    flex: 1 1 55%;
+    min-width: 300px;
   }
 }
 
@@ -233,14 +231,10 @@ input[type="text"], textarea, select {
   }
 }
 
-/* EVEN MORE MOBILE RESPONSIVE (under 400px) */
+/* Even more responsive below 400px */
 @media (max-width: 400px) {
   body {
     font-size: 14px;
-  }
-
-  .toolbox {
-    padding: 12px;
   }
 
   .toolbox .draggable {
