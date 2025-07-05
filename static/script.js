@@ -1,24 +1,35 @@
+// ===== SELECTORS =====
+const builder = document.querySelector('.form-builder');
+
 // ===== DESKTOP DRAG START =====
 document.querySelectorAll('.draggable').forEach(elem => {
   elem.addEventListener('dragstart', e => {
     e.dataTransfer.setData('type', e.target.getAttribute('data-type'));
   });
-});
 
-// ===== TOUCH SUPPORT FOR MOBILE =====
-document.querySelectorAll('.draggable').forEach(elem => {
-  elem.addEventListener('touchstart', e => {
+  // ===== MOBILE TOUCH START =====
+  elem.addEventListener('touchstart', () => {
     const type = elem.getAttribute('data-type');
     elem.classList.add('dragging');
     elem.setAttribute('data-dragging', type);
   });
+});
+
+// ===== ALLOW DROP FOR DESKTOP =====
+builder.addEventListener('dragover', e => e.preventDefault());
+builder.addEventListener('drop', e => {
+  e.preventDefault();
+  const type = e.dataTransfer.getData('type');
+  if (type) handleElementDrop(type);
+});
+
+// ===== MOBILE TOUCH DROP =====
 builder.addEventListener('touchend', e => {
   const draggingElem = document.querySelector('.draggable.dragging');
   if (draggingElem) {
     const builderRect = builder.getBoundingClientRect();
     const touch = e.changedTouches[0];
 
-    // Check if touch ended inside builder area
     if (
       touch.clientX >= builderRect.left &&
       touch.clientX <= builderRect.right &&
@@ -33,66 +44,29 @@ builder.addEventListener('touchend', e => {
   }
 });
 
-
-});
-
-// ===== HANDLE DROP TARGET =====
-const builder = document.querySelector('.form-builder');
-
-// Allow dropping on desktop
-builder.addEventListener('dragover', e => e.preventDefault());
-
-builder.addEventListener('drop', e => {
-  e.preventDefault();
-  const type = e.dataTransfer.getData('type');
-  if (type) handleElementDrop(type);
-});
-
-// Touch support
-builder.addEventListener('touchmove', e => {
-  e.preventDefault();
-});
-
-builder.addEventListener('touchend', e => {
-  const draggingElem = document.querySelector('.draggable.dragging');
-  if (draggingElem) {
-    const type = draggingElem.getAttribute('data-dragging');
-    handleElementDrop(type);
-    draggingElem.classList.remove('dragging');
-  }
-});
-
-// ===== ELEMENT CREATION LOGIC =====
+// ===== ELEMENT DROP CREATION =====
 function handleElementDrop(type) {
   const wrapper = document.createElement('div');
   wrapper.className = 'form-builder-element';
 
+  const makeEditable = el => {
+    el.style.color = 'black';
+    el.contentEditable = 'true';
+    el.setAttribute("spellcheck", "false");
+    return el;
+  };
+
   switch (type) {
     case 'big-heading':
-      const h1 = document.createElement('h1');
-      h1.textContent = 'Big Heading';
-      h1.style.color = 'black';
-      h1.contentEditable = 'true';
-      h1.setAttribute("spellcheck", "false");
-      wrapper.appendChild(h1);
+      wrapper.appendChild(makeEditable(document.createElement('h1'))).textContent = 'Big Heading';
       break;
 
     case 'small-heading':
-      const h3 = document.createElement('h3');
-      h3.textContent = 'Small Heading';
-      h3.style.color = 'black';
-      h3.contentEditable = 'true';
-      h3.setAttribute("spellcheck", "false");
-      wrapper.appendChild(h3);
+      wrapper.appendChild(makeEditable(document.createElement('h3'))).textContent = 'Small Heading';
       break;
 
     case 'paragraph':
-      const p = document.createElement('p');
-      p.textContent = 'This is a paragraph of text.';
-      p.style.color = 'black';
-      p.contentEditable = 'true';
-      p.setAttribute("spellcheck", "false");
-      wrapper.appendChild(p);
+      wrapper.appendChild(makeEditable(document.createElement('p'))).textContent = 'This is a paragraph of text.';
       break;
 
     case 'text-input':
@@ -103,7 +77,6 @@ function handleElementDrop(type) {
       input.type = 'text';
       input.placeholder = 'Enter text';
       input.style.color = 'black';
-      input.setAttribute("spellcheck", "false");
       wrapper.appendChild(inputLabel);
       wrapper.appendChild(input);
       break;
@@ -117,51 +90,36 @@ function handleElementDrop(type) {
       textarea.cols = 30;
       textarea.placeholder = 'Enter details';
       textarea.style.color = 'black';
-      textarea.setAttribute("spellcheck", "false");
       wrapper.appendChild(taLabel);
       wrapper.appendChild(textarea);
       break;
 
     case 'select-option':
-      const selLabel = document.createElement('label');
+      const selLabel = makeEditable(document.createElement('label'));
       selLabel.textContent = 'Choose Option: ';
-      selLabel.style.color = 'black';
-      selLabel.contentEditable = 'true';
-      selLabel.setAttribute('spellcheck', 'false');
-
       const select = document.createElement('select');
-      ['Option 1', 'Option 2', 'Option 3'].forEach(optText => {
-        const option = document.createElement('option');
-        option.textContent = optText;
-        option.style.color = 'black';
-        select.appendChild(option);
+      ['Option 1', 'Option 2', 'Option 3'].forEach(text => {
+        const opt = document.createElement('option');
+        opt.textContent = text;
+        opt.style.color = 'black';
+        select.appendChild(opt);
       });
-
       wrapper.appendChild(selLabel);
       wrapper.appendChild(select);
       break;
 
     case 'radio-group':
-      const radioLabel = document.createElement('label');
+      const radioLabel = makeEditable(document.createElement('label'));
       radioLabel.textContent = 'Choose One: ';
-      radioLabel.style.color = 'black';
-      radioLabel.contentEditable = 'true';
-      radioLabel.setAttribute('spellcheck', 'false');
       wrapper.appendChild(radioLabel);
-
-      ['Radio 1', 'Radio 2', 'Radio 3'].forEach((optText, index) => {
+      ['Radio 1', 'Radio 2', 'Radio 3'].forEach((text, i) => {
         const radio = document.createElement('input');
         radio.type = 'radio';
-        radio.name = `radioGroup${Date.now()}`;
-        radio.id = `${optText}-${index}`;
-
-        const label = document.createElement('label');
+        radio.name = `radio-${Date.now()}`;
+        radio.id = `radio-${i}`;
+        const label = makeEditable(document.createElement('label'));
         label.setAttribute('for', radio.id);
-        label.textContent = optText;
-        label.style.color = 'black';
-        label.contentEditable = 'true';
-        label.setAttribute('spellcheck', 'false');
-
+        label.textContent = text;
         wrapper.appendChild(document.createElement('br'));
         wrapper.appendChild(radio);
         wrapper.appendChild(label);
@@ -169,25 +127,16 @@ function handleElementDrop(type) {
       break;
 
     case 'checkbox-group':
-      const checkLabel = document.createElement('label');
+      const checkLabel = makeEditable(document.createElement('label'));
       checkLabel.textContent = 'Select Multiple: ';
-      checkLabel.style.color = 'black';
-      checkLabel.contentEditable = 'true';
-      checkLabel.setAttribute('spellcheck', 'false');
       wrapper.appendChild(checkLabel);
-
-      ['Check 1', 'Check 2', 'Check 3'].forEach((optText, index) => {
+      ['Check 1', 'Check 2', 'Check 3'].forEach((text, i) => {
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
-        checkbox.id = `${optText}-${index}`;
-
-        const label = document.createElement('label');
+        checkbox.id = `check-${i}`;
+        const label = makeEditable(document.createElement('label'));
         label.setAttribute('for', checkbox.id);
-        label.textContent = optText;
-        label.style.color = 'black';
-        label.contentEditable = 'true';
-        label.setAttribute('spellcheck', 'false');
-
+        label.textContent = text;
         wrapper.appendChild(document.createElement('br'));
         wrapper.appendChild(checkbox);
         wrapper.appendChild(label);
@@ -198,11 +147,10 @@ function handleElementDrop(type) {
   builder.appendChild(wrapper);
 }
 
-// ===== PDF Export =====
+// ===== EXPORT TO PDF =====
 document.getElementById('downloadPdfBtn').addEventListener('click', () => {
   const target = document.querySelector('.form-builder');
   const downloadBtn = document.getElementById('downloadPdfBtn');
-
   downloadBtn.style.display = 'none';
 
   const inputs = target.querySelectorAll('input[type="text"], textarea, select');
@@ -211,16 +159,17 @@ document.getElementById('downloadPdfBtn').addEventListener('click', () => {
   inputs.forEach(elem => {
     const span = document.createElement('div');
     span.textContent = elem.value || elem.placeholder || '[empty]';
-    span.style.color = 'black';
-    span.style.border = '1px solid #ccc';
-    span.style.padding = '4px';
-    span.style.minHeight = '20px';
-    span.style.fontSize = '14px';
-    span.style.marginTop = '4px';
-    span.style.fontFamily = 'Arial, sans-serif';
-    span.style.whiteSpace = 'pre-wrap';
     span.className = 'text-replacement';
-
+    span.style.cssText = `
+      color: black;
+      border: 1px solid #ccc;
+      padding: 4px;
+      font-size: 14px;
+      margin-top: 4px;
+      font-family: Arial, sans-serif;
+      white-space: pre-wrap;
+      min-height: 20px;
+    `;
     elem.style.display = 'none';
     elem.parentNode.insertBefore(span, elem.nextSibling);
     replacements.push({ original: elem, clone: span });
@@ -228,14 +177,11 @@ document.getElementById('downloadPdfBtn').addEventListener('click', () => {
 
   html2canvas(target, { scale: 2 }).then(canvas => {
     const imgData = canvas.toDataURL('image/png');
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF('p', 'pt', 'a4');
-
+    const pdf = new window.jspdf.jsPDF('p', 'pt', 'a4');
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
     const imgWidth = pageWidth;
     const imgHeight = canvas.height * imgWidth / canvas.width;
-
     let position = 0;
 
     if (imgHeight <= pageHeight) {
@@ -249,12 +195,10 @@ document.getElementById('downloadPdfBtn').addEventListener('click', () => {
     }
 
     pdf.save('final.pdf');
-
     replacements.forEach(({ original, clone }) => {
       original.style.display = '';
       clone.remove();
     });
-
     downloadBtn.style.display = 'inline-block';
   });
 });
