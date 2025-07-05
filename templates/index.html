@@ -1,1 +1,35 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Form Builder</title>
+  <link  href="./static/style.css" rel="stylesheet"/>
+</head>
+<body>
+ <div class="builder-container">
+    <div class="toolbox">
+        <h3>Drag there 👉</h3>
+        <div class="draggable" draggable="true" data-type="big-heading">Big Heading</div>
+        <div class="draggable" draggable="true" data-type="small-heading">Small Heading</div>
+        <div class="draggable" draggable="true" data-type="paragraph">Paragraph</div>
+        <div class="draggable" draggable="true" data-type="text-input">Text Input</div>
+        <div class="draggable" draggable="true" data-type="text-area">Text Area</div>
+        <div class="draggable" draggable="true" data-type="select-option">Select Option</div>
+        <div class="draggable" draggable="true" data-type="radio-group">Radio Group</div>
+        <div class="draggable" draggable="true" data-type="checkbox-group">Checkbox Group</div>
+    </div>
+     <div class="form-builder">
+     <button id="downloadPdfBtn" class="download-button">Download as PDF</button>
+
+
+    </div>
+ </div>
+  <script src="./static/script.js"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+
+</body>
+</html>
