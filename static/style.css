@@ -233,3 +233,74 @@ input[type="text"], textarea, select {
   }
 }
 
+/* EVEN MORE MOBILE RESPONSIVE (under 400px) */
+@media (max-width: 400px) {
+  body {
+    font-size: 14px;
+  }
+
+  .toolbox {
+    padding: 12px;
+  }
+
+  .toolbox .draggable {
+    font-size: 14px;
+    padding: 10px;
+    margin: 8px 0;
+  }
+
+  .form-builder {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .form-builder .heading {
+    font-size: 20px;
+    padding: 12px;
+  }
+
+  .element-box {
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+
+  .button-group {
+    top: 2px;
+    right: 2px;
+  }
+
+  .button-group button {
+    padding: 3px 6px;
+    font-size: 12px;
+  }
+
+  .option-box {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .option-box button {
+    align-self: flex-end;
+    font-size: 14px;
+  }
+
+  .option-input {
+    padding: 6px;
+  }
+
+  input[type="text"],
+  textarea,
+  select {
+    padding: 6px;
+    font-size: 14px;
+  }
+
+  .download-button {
+    font-size: 0.85rem;
+    padding: 8px 16px;
+    width: 100%;
+    align-self: center;
+    margin-top: 10px;
+  }
+}
+
