@@ -1,21 +1,45 @@
 // ===== SELECTORS =====
 const builder = document.querySelector('.form-builder');
 
-// ===== DESKTOP DRAG START =====
+// ===== DRAG & TOUCH SUPPORT =====
+let lastTouchMove = 0;
+
 document.querySelectorAll('.draggable').forEach(elem => {
+  // Desktop drag start
   elem.addEventListener('dragstart', e => {
     e.dataTransfer.setData('type', e.target.getAttribute('data-type'));
   });
 
-  // ===== MOBILE TOUCH START =====
-  elem.addEventListener('touchstart', () => {
+  // Mobile touch start
+  elem.addEventListener('touchstart', e => {
     const type = elem.getAttribute('data-type');
     elem.classList.add('dragging');
     elem.setAttribute('data-dragging', type);
   });
+
+  // Mobile touch move with throttling
+  elem.addEventListener('touchmove', e => {
+    const now = Date.now();
+    if (now - lastTouchMove < 30) return;
+    lastTouchMove = now;
+
+    const touch = e.touches[0];
+    elem.style.position = 'absolute';
+    elem.style.zIndex = 9999;
+    elem.style.left = `${touch.clientX - 40}px`;
+    elem.style.top = `${touch.clientY - 20}px`;
+  });
+
+  // Mobile touch end resets
+  elem.addEventListener('touchend', () => {
+    elem.style.position = '';
+    elem.style.zIndex = '';
+    elem.style.left = '';
+    elem.style.top = '';
+  });
 });
 
-// ===== ALLOW DROP FOR DESKTOP =====
+// ===== DESKTOP DROP SUPPORT =====
 builder.addEventListener('dragover', e => e.preventDefault());
 builder.addEventListener('drop', e => {
   e.preventDefault();
@@ -23,28 +47,24 @@ builder.addEventListener('drop', e => {
   if (type) handleElementDrop(type);
 });
 
-// ===== MOBILE TOUCH DROP =====
+// ===== MOBILE DROP SUPPORT =====
 builder.addEventListener('touchend', e => {
   const draggingElem = document.querySelector('.draggable.dragging');
   if (draggingElem) {
-    const builderRect = builder.getBoundingClientRect();
+    const type = draggingElem.getAttribute('data-dragging');
     const touch = e.changedTouches[0];
+    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
 
-    if (
-      touch.clientX >= builderRect.left &&
-      touch.clientX <= builderRect.right &&
-      touch.clientY >= builderRect.top &&
-      touch.clientY <= builderRect.bottom
-    ) {
-      const type = draggingElem.getAttribute('data-dragging');
+    if (builder.contains(dropTarget)) {
       handleElementDrop(type);
     }
 
     draggingElem.classList.remove('dragging');
+    draggingElem.removeAttribute('data-dragging');
   }
 });
 
-// ===== ELEMENT DROP CREATION =====
+// ===== HANDLE ELEMENT DROP =====
 function handleElementDrop(type) {
   const wrapper = document.createElement('div');
   wrapper.className = 'form-builder-element';
@@ -56,17 +76,25 @@ function handleElementDrop(type) {
     return el;
   };
 
+  let elementToAppend = null;
+
   switch (type) {
     case 'big-heading':
-      wrapper.appendChild(makeEditable(document.createElement('h1'))).textContent = 'Big Heading';
+      elementToAppend = makeEditable(document.createElement('h1'));
+      elementToAppend.textContent = 'Big Heading';
+      wrapper.appendChild(elementToAppend);
       break;
 
     case 'small-heading':
-      wrapper.appendChild(makeEditable(document.createElement('h3'))).textContent = 'Small Heading';
+      elementToAppend = makeEditable(document.createElement('h3'));
+      elementToAppend.textContent = 'Small Heading';
+      wrapper.appendChild(elementToAppend);
       break;
 
     case 'paragraph':
-      wrapper.appendChild(makeEditable(document.createElement('p'))).textContent = 'This is a paragraph of text.';
+      elementToAppend = makeEditable(document.createElement('p'));
+      elementToAppend.textContent = 'This is a paragraph of text.';
+      wrapper.appendChild(elementToAppend);
       break;
 
     case 'text-input':
@@ -144,7 +172,7 @@ function handleElementDrop(type) {
       break;
   }
 
-  builder.appendChild(wrapper);
+  requestAnimationFrame(() => builder.appendChild(wrapper)); // smoother rendering
 }
 
 // ===== EXPORT TO PDF =====
@@ -175,32 +203,35 @@ document.getElementById('downloadPdfBtn').addEventListener('click', () => {
     replacements.push({ original: elem, clone: span });
   });
 
-  html2canvas(target, { scale: 2 }).then(canvas => {
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new window.jspdf.jsPDF('p', 'pt', 'a4');
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const imgWidth = pageWidth;
-    const imgHeight = canvas.height * imgWidth / canvas.width;
-    let position = 0;
+  setTimeout(() => {
+    html2canvas(target, { scale: 2, useCORS: true }).then(canvas => {
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new window.jspdf.jsPDF('p', 'pt', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = canvas.height * imgWidth / canvas.width;
 
-    if (imgHeight <= pageHeight) {
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-    } else {
-      while (position < imgHeight) {
-        pdf.addImage(imgData, 'PNG', 0, position * -1, imgWidth, imgHeight);
-        position += pageHeight;
-        if (position < imgHeight) pdf.addPage();
+      let position = 0;
+      if (imgHeight <= pageHeight) {
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      } else {
+        while (position < imgHeight) {
+          pdf.addImage(imgData, 'PNG', 0, position * -1, imgWidth, imgHeight);
+          position += pageHeight;
+          if (position < imgHeight) pdf.addPage();
+        }
       }
-    }
 
-    pdf.save('final.pdf');
-    replacements.forEach(({ original, clone }) => {
-      original.style.display = '';
-      clone.remove();
+      pdf.save('final.pdf');
+      replacements.forEach(({ original, clone }) => {
+        original.style.display = '';
+        clone.remove();
+      });
+      downloadBtn.style.display = 'inline-block';
     });
-    downloadBtn.style.display = 'inline-block';
-  });
+  }, 300);
 });
+
 
 
