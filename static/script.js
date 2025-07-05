@@ -232,9 +232,3 @@ document.getElementById('downloadPdfBtn').addEventListener('click', () => {
     });
   }, 300);
 });
-
-
-
-
-
-
