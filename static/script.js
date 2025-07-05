@@ -12,10 +12,28 @@ document.querySelectorAll('.draggable').forEach(elem => {
     elem.classList.add('dragging');
     elem.setAttribute('data-dragging', type);
   });
+builder.addEventListener('touchend', e => {
+  const draggingElem = document.querySelector('.draggable.dragging');
+  if (draggingElem) {
+    const builderRect = builder.getBoundingClientRect();
+    const touch = e.changedTouches[0];
 
-  elem.addEventListener('touchend', e => {
-    elem.classList.remove('dragging');
-  });
+    // Check if touch ended inside builder area
+    if (
+      touch.clientX >= builderRect.left &&
+      touch.clientX <= builderRect.right &&
+      touch.clientY >= builderRect.top &&
+      touch.clientY <= builderRect.bottom
+    ) {
+      const type = draggingElem.getAttribute('data-dragging');
+      handleElementDrop(type);
+    }
+
+    draggingElem.classList.remove('dragging');
+  }
+});
+
+
 });
 
 // ===== HANDLE DROP TARGET =====
